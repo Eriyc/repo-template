@@ -47,6 +47,10 @@
             tests = {
               enable = false;
               entry = "echo 'No tests defined yet.'";
+              stages = [
+                "manual"
+                "pre-push"
+              ];
             };
           };
         };
