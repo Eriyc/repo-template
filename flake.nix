@@ -65,35 +65,40 @@
         };
     in
     {
-      # Run the hooks with `nix fmt`.
       formatter = forAllSystems (system: (treefmtEvalFor system).config.build.wrapper);
 
-      checks = forAllSystems (system: {
-        pre-commit-check = inputs.git-hooks.lib.${system}.run {
-          src = ./.;
-          hooks = {
-            treefmt = {
-              enable = true;
-              entry = "${(treefmtEvalFor system).config.build.wrapper}/bin/treefmt";
-            };
-            gitlint.enable = true;
+      checks = forAllSystems (
+        system:
+        let
+          pkgs = import nixpkgs { inherit system; };
+        in
+        {
+          pre-commit-check = inputs.git-hooks.lib.${system}.run {
+            src = ./.;
+            hooks = {
+              treefmt = {
+                enable = true;
+                entry = "${(treefmtEvalFor system).config.build.wrapper}/bin/treefmt";
+              };
+              gitlint.enable = true;
 
-            gitleaks = {
-              enable = true;
-              entry = "gitleaks git";
-              pass_filenames = false;
-            };
+              gitleaks = {
+                enable = true;
+                entry = "${pkgs.gitleaks}/bin/gitleaks git";
+                pass_filenames = false;
+              };
 
-            tests = {
-              enable = true;
-              entry = "echo 'No tests defined yet.'";
-              stages = [
-                "pre-push"
-              ];
+              tests = {
+                enable = true;
+                entry = "echo 'No tests defined yet.'";
+                stages = [
+                  "pre-push"
+                ];
+              };
             };
           };
-        };
-      });
+        }
+      );
 
       devShells = forAllSystems (
         system:
@@ -107,8 +112,6 @@
               go
               bun
               gitlint
-
-              gitleaks
             ];
 
             inherit shellHook;
