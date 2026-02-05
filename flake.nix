@@ -38,6 +38,11 @@
           hooks = {
             nixfmt.enable = true;
             gitlint.enable = true;
+
+            gitleaks = {
+              enable = true;
+              entry = "gitleaks git";
+            };
           };
         };
       });
@@ -54,6 +59,8 @@
               go
               bun
               gitlint
+
+              gitleaks
             ];
 
             inherit shellHook;
