@@ -43,6 +43,11 @@
               enable = true;
               entry = "gitleaks git";
             };
+
+            tests = {
+              enable = false;
+              entry = "echo 'No tests defined yet.'";
+            };
           };
         };
       });
