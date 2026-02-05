@@ -45,10 +45,9 @@
             };
 
             tests = {
-              enable = false;
+              enable = true;
               entry = "echo 'No tests defined yet.'";
               stages = [
-                "manual"
                 "pre-push"
               ];
             };
