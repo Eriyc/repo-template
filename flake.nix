@@ -37,6 +37,7 @@
           src = ./.;
           hooks = {
             nixfmt.enable = true;
+            gitlint.enable = true;
           };
         };
       });
