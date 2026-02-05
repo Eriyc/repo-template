@@ -4,10 +4,16 @@
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
     git-hooks.url = "github:cachix/git-hooks.nix";
+    treefmt-nix.url = "github:numtide/treefmt-nix";
   };
 
   outputs =
-    { self, nixpkgs, ... }@inputs:
+    {
+      self,
+      nixpkgs,
+      treefmt-nix,
+      ...
+    }@inputs:
     let
       supportedSystems = [
         "x86_64-linux"
@@ -16,32 +22,66 @@
         "aarch64-darwin"
       ];
       forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
-    in
-    {
-      # Run the hooks with `nix fmt`.
-      formatter = forAllSystems (
+      treefmtEvalFor =
         system:
         let
           pkgs = nixpkgs.legacyPackages.${system};
-          config = self.checks.${system}.pre-commit-check.config;
-          inherit (config) package configFile;
-          script = ''
-            ${pkgs.lib.getExe package} run --all-files --config ${configFile}
-          '';
         in
-        pkgs.writeShellScriptBin "pre-commit-run" script
-      );
+        treefmt-nix.lib.evalModule pkgs {
+          projectRootFile = "flake.nix"; # tells treefmt where repo root is
+
+          programs = {
+            nixfmt.enable = true; # uses nixfmt from pkgs
+            shfmt.enable = true;
+            oxfmt.enable = true;
+          };
+
+          settings = {
+            formatter = {
+              shfmt = {
+                options = [
+                  "-i"
+                  "2"
+                  "-s"
+                  "-w"
+                ];
+              };
+              oxfmt = {
+                includes = [
+                  "*.md"
+                  "*.yaml"
+                  "*.yml"
+                  "*.json"
+                  "*.html"
+                  "*.css"
+                  "*.js"
+                  "*.ts"
+                  "*.tsx"
+                  "*.svelte"
+                ];
+              };
+            };
+          };
+        };
+    in
+    {
+      # Run the hooks with `nix fmt`.
+      formatter = forAllSystems (system: (treefmtEvalFor system).config.build.wrapper);
 
       checks = forAllSystems (system: {
         pre-commit-check = inputs.git-hooks.lib.${system}.run {
           src = ./.;
           hooks = {
-            nixfmt.enable = true;
+            treefmt = {
+              enable = true;
+              entry = "${(treefmtEvalFor system).config.build.wrapper}/bin/treefmt";
+            };
             gitlint.enable = true;
 
             gitleaks = {
               enable = true;
               entry = "gitleaks git";
+              pass_filenames = false;
             };
 
             tests = {
