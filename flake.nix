@@ -105,6 +105,8 @@
         let
           pkgs = import nixpkgs { inherit system; };
           inherit (self.checks.${system}.pre-commit-check) shellHook enabledPackages;
+          customShellHook = shellHook + "";
+
         in
         {
           default = pkgs.mkShell {
@@ -114,7 +116,7 @@
               gitlint
             ];
 
-            inherit shellHook;
+            inherit customShellHook;
             buildInputs = enabledPackages;
           };
         }
